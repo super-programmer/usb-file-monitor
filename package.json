@@ -1,0 +1,50 @@
+{
+    "name": "usb-file-monitor",
+    "productName": "usb-file-monitor",
+    "version": "1.0.0",
+    "description": "My Electron application description",
+    "main": "src/main.js",
+    "scripts": {
+        "start": "electron-forge start",
+        "package": "electron-forge package",
+        "make": "electron-forge make",
+        "publish": "electron-forge publish",
+        "lint": "echo \"No linting configured\"",
+        "postinstall": "electron-rebuild"
+    },
+    "build": {
+        "win": {
+            "requestedExecutionLevel": "highestAvailable"
+        },
+        "nsis": {
+            "runAsAdmin": true
+        }
+    },
+    "devDependencies": {
+        "@electron-forge/cli": "^7.6.1",
+        "@electron-forge/maker-deb": "^7.6.1",
+        "@electron-forge/maker-rpm": "^7.6.1",
+        "@electron-forge/maker-squirrel": "^7.6.1",
+        "@electron-forge/maker-zip": "^7.6.1",
+        "@electron-forge/plugin-auto-unpack-natives": "^7.6.1",
+        "@electron-forge/plugin-fuses": "^7.6.1",
+        "@electron/fuses": "^1.8.0",
+        "electron": "^34.2.0",
+        "electron-rebuild": "^3.2.9"
+    },
+    "keywords": [],
+    "author": {
+        "name": "周克朋",
+        "email": "15538308935@163.com"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "@electron/remote": "latest",
+        "axios": "^1.7.9",
+        "chokidar": "^4.0.3",
+        "electron-squirrel-startup": "^1.0.1",
+        "iconv-lite": "^0.6.3",
+        "mongodb": "^6.14.2",
+        "usb": "^2.9.0"
+    }
+}

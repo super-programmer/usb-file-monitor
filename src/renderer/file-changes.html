@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文件变更记录</title>
+    <style>
+        /* 引入外部字体 */
+        
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+        /* 全局样式 */
+        
+        body {
+            font-family: "Inter", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        /* 容器样式 */
+        
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* 标题样式 */
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        h1::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background-color: #2ecc71;
+            /* 修改为新主色 */
+            border-radius: 3px;
+        }
+        /* 过滤器样式 */
+        
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) inset;
+        }
+        
+        .filters input,
+        .filters select {
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        
+        .filters input:focus,
+        .filters select:focus {
+            border-color: #2ecc71;
+            /* 修改为新主色 */
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.3);
+            /* 修改为新主色 */
+        }
+        
+        .filters button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #2ecc71;
+            /* 修改为新主色 */
+            color: white;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .filters button:hover {
+            background-color: #27ae60;
+            /* 修改为新主色的深色变体 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .filters button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        /* 变更记录容器样式 */
+        
+        #changes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        
+        .change-record {
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .change-record:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .change-record::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+        }
+        
+        .type-add::before {
+            background-color: #22c55e;
+        }
+        
+        .type-change::before {
+            background-color: #eab308;
+        }
+        
+        .type-unlink::before {
+            background-color: #ef4444;
+        }
+        
+        .change-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .type-add {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+        
+        .type-change {
+            background-color: rgba(234, 179, 8, 0.1);
+            color: #ca8a04;
+        }
+        
+        .type-unlink {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+        
+        .file-path {
+            font-family: "Courier New", monospace;
+            background-color: #f8fafc;
+            padding: 8px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        .timestamp {
+            color: #64748b;
+            font-size: 13px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .file-stats {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .file-stats p {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .file-stats p span {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        /* 分页样式 */
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .pagination button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .pagination button:not(:disabled):hover {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination button.active {
+            background-color: #2ecc71;
+            /* 修改为新主色 */
+            color: white;
+        }
+        
+        .pagination span {
+            padding: 10px 16px;
+            background-color: #f8fafc;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        /* 响应式设计 */
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 15px;
+                padding: 15px;
+            }
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            #changes-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>文件变更记录</h1>
+
+        <div class="filters">
+            <input type="text" id="fileName" placeholder="文件名搜索" />
+            <select id="changeType">
+          <option value="">变更类型</option>
+          <option value="add">新增</option>
+          <option value="change">修改</option>
+          <option value="unlink">删除</option>
+        </select>
+            <input type="date" id="startDate" />
+            <input type="date" id="endDate" />
+            <button onclick="applyFilters()">
+          <i class="fas fa-filter"></i> 应用
+        </button>
+            <button onclick="resetFilters()">
+          <i class="fas fa-refresh"></i> 重置
+        </button>
+        </div>
+
+        <div id="changes-container"></div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script>
+        var {
+            ipcRenderer
+        } = require("electron");
+        var currentPage = 1;
+        const limit = 10;
+
+        function loadChanges(page = 1) {
+            currentPage = page;
+            const filter = {
+                fileName: document.getElementById("fileName").value,
+                type: document.getElementById("changeType").value,
+                startDate: document.getElementById("startDate").value,
+                endDate: document.getElementById("endDate").value
+            };
+            ipcRenderer.send("get-file-changes", {
+                page,
+                limit,
+                filter
+            });
+        }
+
+        function applyFilters() {
+            console.log(loadChanges);
+            loadChanges(1);
+        }
+
+        function resetFilters() {
+            document.getElementById("fileName").value = "";
+            document.getElementById("changeType").value = "";
+            document.getElementById("startDate").value = "";
+            document.getElementById("endDate").value = "";
+            loadChanges(1);
+        }
+
+        function getChangeTypeClass(type) {
+            return ({
+                add: "type-add",
+                change: "type-change",
+                unlink: "type-unlink"
+            }[type] || "");
+        }
+
+        function getChangeTypeText(type) {
+            return ({
+                add: "新增",
+                change: "修改",
+                unlink: "删除"
+            }[type] || type);
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return "N/A";
+            const units = ["B", "KB", "MB", "GB"];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return `${size.toFixed(2)} ${units[unitIndex]}`;
+        }
+
+        function renderChanges(records) {
+            const container = document.getElementById("changes-container");
+            container.innerHTML = records
+                .map(
+                    (record) => `
+                        <div class="change-record ${getChangeTypeClass(
+                          record.type
+                        )}">
+                            <span class="change-type ${getChangeTypeClass(
+                              record.type
+                            )}">
+                                ${getChangeTypeText(record.type)}
+                            </span>
+                            <span class="timestamp">${record.recordDate} ${
+              record.recordTime
+            }</span>
+                            <div class="file-path">${record.filePath}</div>
+                            ${
+                              record.fileStats
+                                ? `
+                                    <div class="file-stats">
+                                        <p><span>大小:</span> ${formatFileSize(
+                                          record.fileStats.size
+                                        )}</p>
+                                        <p><span>最后修改:</span> ${new Date(
+                                          record.fileStats.mtime
+                                        ).toLocaleString()}</p>
+                                    </div>
+                                `
+                                : ""
+                            }
+                            <p>${record.details}</p>
+                        </div>
+                    `
+          )
+          .join("");
+      }
+
+      function renderPagination(totalPages) {
+        const pagination = document.getElementById("pagination");
+        pagination.innerHTML = `
+                <button onclick="loadChanges(1)" ${
+                  currentPage === 1 ? "disabled" : ""
+                }>
+                    <i class="fas fa-step-backward"></i> 首页
+                </button>
+                <button onclick="loadChanges(${currentPage - 1})" ${
+          currentPage === 1 ? "disabled" : ""
+        }>
+                    <i class="fas fa-chevron-left"></i> 上一页
+                </button>
+                <span>第 ${currentPage} 页，共 ${totalPages} 页</span>
+                <button onclick="loadChanges(${currentPage + 1})" ${
+          currentPage === totalPages ? "disabled" : ""
+        }>
+                    下一页 <i class="fas fa-chevron-right"></i>
+                </button>
+                <button onclick="loadChanges(${totalPages})" ${
+          currentPage === totalPages ? "disabled" : ""
+        }>
+                    尾页 <i class="fas fa-step-forward"></i>
+                </button>
+            `;
+      }
+
+      ipcRenderer.on("file-changes-response", (event, response) => {
+        console.log(response);
+        if (response.success) {
+          const { changes, totalPages } = response.data;
+          renderChanges(changes);
+          renderPagination(totalPages);
+        } else {
+          alert("获取变更记录失败");
+        }
+      });
+
+      // 监听实时更
+      ipcRenderer.on("file-change", () => {
+        if (currentPage === 1) {
+          loadChanges(); // 如果在第一页，刷新显示最新变更
+        }
+      });
+
+      // 初始加载
+      loadChanges();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,118 @@
+<!--
+ * @Author: 周克朋 15538308935@163.com
+ * @Date: 2025-02-27 17:31:03
+ * @LastEditors: 周克朋 15538308935@163.com
+ * @LastEditTime: 2025-05-13 14:16:47
+ * @FilePath: \usb-file-monitor\src\login.html
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>登录</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .login-container {
+            padding: 30px;
+            width: 100%;
+        }
+        
+        .login-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .login-button:hover {
+            background-color: #45a049;
+        }
+        
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+        /* 新增 logo 和软件名称样式 */
+        
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo-container img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+        
+        .software-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <!-- 新增 logo 和软件名称 -->
+        <div class="logo-container">
+            <img src="../src/static/images/file-management-icon.png" alt="文件管理图标" />
+            <div class="software-name">lighthouse</div>
+        </div>
+        <div class="input-group">
+            <label for="username">账号</label>
+            <input type="text" id="username" placeholder="请输入账号" />
+        </div>
+        <div class="input-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" placeholder="请输入密码" />
+        </div>
+        <button class="login-button" onclick="login()">登录</button>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+    <script src="login.js"></script>
+</body>
+
+</html>

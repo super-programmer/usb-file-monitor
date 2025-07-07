@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>lighthouse</title>
+    <style>
+        /* 全局样式 */
+        
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        /* 标题栏样式 */
+        
+        .titlebar {
+            height: 40px;
+            background: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .titlebar-drag {
+            -webkit-app-region: drag;
+            flex: 1;
+            height: 100%;
+        }
+        
+        .titlebar-buttons {
+            -webkit-app-region: no-drag;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .titlebar-buttons button {
+            -webkit-app-region: no-drag;
+            border: none;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .titlebar-buttons button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        /* 状态区域和文件区域整体布局 */
+        
+        #status,
+        #files {
+            background: #fff;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #status h2,
+        #files h3 {
+            margin-top: 0;
+            font-size: 24px;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 40px;
+            /* 固定头部高度 */
+        }
+        /* 表格容器样式 */
+        
+        .table-container {
+            max-height: calc(50vh - 100px);
+            /* 设置最大高度，减去边距和头部高度 */
+            overflow-y: auto;
+            /* 超出部分滚动 */
+        }
+        /* 表格样式 */
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        /* 弹框样式 */
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* 统一的查看更多按钮样式 */
+        
+        .more-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 14px;
+            min-width: 100px;
+        }
+        
+        .more-button:hover {
+            background: #2980b9;
+        }
+        /* 移动磁盘状态颜色样式 */
+        
+        .status-normal {
+            color: green;
+        }
+        
+        .status-error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="titlebar">
+        <div class="titlebar-drag">
+            <!-- 这里可以放标题或者其他内容 -->
+        </div>
+        <div class="titlebar-buttons">
+            <button id="minBtn" title="最小化">-</button>
+            <button id="maxBtn" title="最大化">□</button>
+            <button id="closeBtn" title="关闭窗口">×</button>
+        </div>
+    </div>
+    <div id="status">
+        <h2>
+            移动磁盘状态:
+            <button id="usb-more" class="more-button" style="display: none">
+          查看更多
+        </button>
+        </h2>
+        <div class="table-container">
+            <table id="usb-status-table">
+                <thead>
+                    <tr>
+                        <th>名称</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="usb-status-body">
+                    <!-- 移动磁盘状态列表将在这里动态添加 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="files">
+        <h3>
+            文件变更监控：
+            <button id="file-more" class="more-button" style="display: none">
+          查看更多
+        </button>
+        </h3>
+        <div class="table-container">
+            <table id="file-changes-table">
+                <thead>
+                    <tr>
+                        <th>文件名称</th>
+                        <th>文件大小</th>
+                        <th>修改类型</th>
+                        <th>修改用户</th>
+                        <th>修改时间</th>
+                    </tr>
+                </thead>
+                <tbody id="file-changes-body">
+                    <!-- 文件变更记录列表将在这里动态添加 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 移动磁盘状态弹框 -->
+    <div id="usb-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="usb-close">&times;</span>
+            <h2>全部移动磁盘状态</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>名称</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="usb-modal-body">
+                    <!-- 全部移动磁盘状态列表将在这里动态添加 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 文件变更记录弹框 -->
+    <div id="file-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="file-close">&times;</span>
+            <h2>全部文件变更记录</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>文件名称</th>
+                        <th>文件大小</th>
+                        <th>修改类型</th>
+                        <th>修改时间</th>
+                    </tr>
+                </thead>
+                <tbody id="file-modal-body">
+                    <!-- 全部文件变更记录列表将在这里动态添加 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const {
+            ipcRenderer
+        } = require("electron");
+
+        // 最小化
+        document.getElementById("minBtn").addEventListener("click", () => {
+            ipcRenderer.send("window-min");
+        });
+
+        // 最大化/还原
+        document.getElementById("maxBtn").addEventListener("click", () => {
+            ipcRenderer.send("window-max");
+        });
+
+        // 关闭
+        document.getElementById("closeBtn").addEventListener("click", () => {
+            ipcRenderer.send("window-close");
+        });
+
+        // 模拟移动磁盘状态数据
+        let usbStatusData = [];
+
+        // 模拟文件变更记录数据
+        let fileChangesData = [{}, {}, {}, {}];
+
+        // 将localstorage 用户信息传给主进程
+        ipcRenderer.on("get-localstorage-username", (event) => {
+            const userName = localStorage.getItem("userName");
+            ipcRenderer.send("localstorage-username", userName);
+        });
+        // 获取设备及文件变更
+        ipcRenderer.on("usb-status-data", (event, data) => {
+            console.log(data);
+            usbStatusData = data;
+            console.log(usbStatusData);
+            displayPartialUSBStatus();
+            checkAndShowMoreButton("usb");
+        });
+
+        ipcRenderer.on("file-changes-data", (event, data) => {
+            fileChangesData = data;
+            displayPartialFileChanges();
+            console.log(fileChangesData);
+            checkAndShowMoreButton("file");
+        });
+
+        // 显示部分移动磁盘状态
+        function displayPartialUSBStatus() {
+            const usbStatusBody = document.getElementById("usb-status-body");
+            usbStatusBody.innerHTML = "";
+            for (let i = 0; i < Math.min(usbStatusData.length, 3); i++) {
+                const row = document.createElement("tr");
+                const nameCell = document.createElement("td");
+                const statusCell = document.createElement("td");
+
+                nameCell.textContent = usbStatusData[i].Name;
+
+                // 设置状态单元格的文本和颜色
+                statusCell.textContent = usbStatusData[i].Status;
+                if (usbStatusData[i].Status === "正常") {
+                    statusCell.className = "status-normal";
+                } else {
+                    statusCell.className = "status-error";
+                }
+
+                row.appendChild(nameCell);
+                row.appendChild(statusCell);
+                usbStatusBody.appendChild(row);
+            }
+        }
+
+        // 显示全部移动磁盘状态
+        function displayAllUSBStatus() {
+            const usbModalBody = document.getElementById("usb-modal-body");
+            usbModalBody.innerHTML = "";
+            for (let i = 0; i < usbStatusData.length; i++) {
+                const row = document.createElement("tr");
+                const nameCell = document.createElement("td");
+                const statusCell = document.createElement("td");
+
+                nameCell.textContent = usbStatusData[i].Name;
+
+                // 设置状态单元格的文本和颜色
+                statusCell.textContent = usbStatusData[i].Status;
+                if (usbStatusData[i].Status === "正常") {
+                    statusCell.className = "status-normal";
+                } else {
+                    statusCell.className = "status-error";
+                }
+
+                row.appendChild(nameCell);
+                row.appendChild(statusCell);
+                usbModalBody.appendChild(row);
+            }
+        }
+
+        // 显示部分文件变更记录
+        function displayPartialFileChanges() {
+            const fileChangesBody = document.getElementById("file-changes-body");
+            fileChangesBody.innerHTML = "";
+            for (let i = 0; i < Math.min(fileChangesData.length, 3); i++) {
+                const row = document.createElement("tr");
+                const nameCell = document.createElement("td");
+                const sizeCell = document.createElement("td");
+                const typeCell = document.createElement("td");
+                const userNameCell = document.createElement("td");
+                const timeCell = document.createElement("td");
+
+                nameCell.textContent = fileChangesData[i].name;
+                sizeCell.textContent = fileChangesData[i].size;
+                typeCell.textContent = fileChangesData[i].details;
+                userNameCell.textContent = fileChangesData[i].userName;
+                timeCell.textContent = fileChangesData[i].time;
+
+                row.appendChild(nameCell);
+                row.appendChild(sizeCell);
+                row.appendChild(typeCell);
+                row.appendChild(userNameCell);
+                row.appendChild(timeCell);
+
+                fileChangesBody.appendChild(row);
+            }
+        }
+
+        // 显示全部文件变更记录
+        function displayAllFileChanges() {
+            const fileModalBody = document.getElementById("file-modal-body");
+            fileModalBody.innerHTML = "";
+            for (let i = 0; i < fileChangesData.length; i++) {
+                const row = document.createElement("tr");
+                const nameCell = document.createElement("td");
+                const sizeCell = document.createElement("td");
+                const typeCell = document.createElement("td");
+                const timeCell = document.createElement("td");
+
+                nameCell.textContent = fileChangesData[i].name;
+                sizeCell.textContent = fileChangesData[i].size;
+                typeCell.textContent = fileChangesData[i].type;
+                timeCell.textContent = fileChangesData[i].time;
+
+                row.appendChild(nameCell);
+                row.appendChild(sizeCell);
+                row.appendChild(typeCell);
+                row.appendChild(timeCell);
+
+                fileModalBody.appendChild(row);
+            }
+        }
+
+        // 检查内容是否超出并显示/隐藏查看更多按钮
+        function checkAndShowMoreButton(type) {
+            const container =
+                type === "usb" ?
+                document.querySelector("#status .table-container") :
+                document.querySelector("#files .table-container");
+            const button =
+                type === "usb" ?
+                document.getElementById("usb-more") :
+                document.getElementById("file-more");
+
+            // 等待DOM渲染完成
+            setTimeout(() => {
+                if (container.scrollHeight > container.clientHeight) {
+                    button.style.display = "block";
+                } else {
+                    button.style.display = "none";
+                }
+            }, 100);
+        }
+
+        // 打开移动磁盘状态弹框
+        document.getElementById("usb-more").addEventListener("click", () => {
+            const usbModal = document.getElementById("usb-modal");
+            displayAllUSBStatus();
+            usbModal.style.display = "block";
+        });
+
+        // 关闭移动磁盘状态弹框
+        document.getElementById("usb-close").addEventListener("click", () => {
+            const usbModal = document.getElementById("usb-modal");
+            usbModal.style.display = "none";
+        });
+
+        // 打开文件变更记录弹框
+        document.getElementById("file-more").addEventListener("click", () => {
+            const fileModal = document.getElementById("file-modal");
+            displayAllFileChanges();
+            fileModal.style.display = "block";
+        });
+
+        // 关闭文件变更记录弹框
+        document.getElementById("file-close").addEventListener("click", () => {
+            const fileModal = document.getElementById("file-modal");
+            fileModal.style.display = "none";
+        });
+
+        // 窗口大小改变时重新检查内容是否超出
+        window.addEventListener("resize", () => {
+            checkAndShowMoreButton("usb");
+            checkAndShowMoreButton("file");
+        });
+    </script>
+</body>
+
+</html>

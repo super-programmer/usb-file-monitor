@@ -1,0 +1,39 @@
+
+        $OutputEncoding = [System.Text.Encoding]::GetEncoding('gbk');
+        [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding('gbk');
+        try {
+            if (-not (Test-Path 'C:\Users\kepeng\AppData\Local\Temp\usb-scripts')) {
+                New-Item -ItemType Directory -Path 'C:\Users\kepeng\AppData\Local\Temp\usb-scripts' | Out-Null;
+            }
+            $devices = @();
+            $usbDevices = Get-WmiObject Win32_PnPEntity | Where-Object { 
+                $_.PNPClass -eq 'USB' -or 
+                $_.Name -like '*USB*' -or 
+                $_.DeviceID -like '*USB*'
+            };
+            foreach ($device in $usbDevices) {
+                $devices += @{
+                    Type = 'USB设备';
+                    Name = $device.Name;
+                    Description = $device.Description;
+                    Status = if ($device.Status -eq 'OK') { '正常' } else { $device.Status };
+                    DeviceID = $device.DeviceID;
+                    Manufacturer = $device.Manufacturer;
+                };
+            }
+            if ($devices.Count -gt 0) {
+                $jsonOutput = ConvertTo-Json -InputObject $devices -Depth 3 -Compress;
+            } else {
+                $jsonOutput = '[{"Type":"USB设备","Name":"未找到设备","Status":"未知"}]';
+            }
+            $jsonOutput | Out-File -FilePath 'C:\Users\kepeng\AppData\Local\Temp\usb-scripts\usb-devices.json' -Encoding UTF8 -Force;
+            if (Test-Path 'C:\Users\kepeng\AppData\Local\Temp\usb-scripts\usb-devices.json') {
+                Write-Host '文件写入成功';
+            } else {
+                throw '文件写入失败';
+            }
+        } catch {
+            Write-Error $_.Exception.Message;
+            exit 1;
+        }
+    
