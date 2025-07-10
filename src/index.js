@@ -2,7 +2,7 @@
  * @Author: 周克朋 15538308935@163.com
  * @Date: 2025-02-17 20:39:51
  * @LastEditors: 周克朋 15538308935@163.com
- * @LastEditTime: 2025-07-10 16:48:54
+ * @LastEditTime: 2025-07-10 17:12:35
  * @FilePath: \usb-file-monitor\src\index.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -21,6 +21,28 @@ const { logger } = require("./util/index.js");
 let mainWindow;
 let watcher;
 
+// src/index.js
+let diskCheckInterval;
+
+// 定时检测磁盘插拔
+function startDiskCheck() {
+    const checkInterval = 5000; // 每5秒检测一次
+    diskCheckInterval = setInterval(async() => {
+        try {
+            await getRemovableDiskPaths();
+        } catch (error) {
+            logger.error(`检测磁盘插拔失败: ${error}`);
+        }
+    }, checkInterval);
+}
+
+// 停止磁盘检测
+function stopDiskCheck() {
+    if (diskCheckInterval) {
+        clearInterval(diskCheckInterval);
+        diskCheckInterval = null;
+    }
+}
 // 获取可移动磁盘路径
 async function getRemovableDiskPaths() {
     const tempDir = path.join(require("os").tmpdir(), "usb-scripts");
@@ -213,6 +235,7 @@ async function getRemovableDiskPaths() {
     });
 }
 
+
 // 监控文件变化
 async function startFileWatcher() {
     const os = require("os");
@@ -345,6 +368,7 @@ async function createWindow() {
         resizable: true,
         transparent: false // 支持透明
     });
+    startDiskCheck();
     // 设置正确的字符编码
     mainWindow.webContents.on("did-finish-load", () => {
         mainWindow.webContents.setZoomFactor(1);
@@ -365,6 +389,7 @@ async function createWindow() {
 
     ipcMain.on("window-close", () => {
         mainWindow.close();
+        stopDiskCheck();
     });
 
     // Enable the remote module for this window's webContents
