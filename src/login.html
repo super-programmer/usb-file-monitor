@@ -1,19 +1,16 @@
-<!--
- * @Author: 周克朋 15538308935@163.com
- * @Date: 2025-02-27 17:31:03
- * @LastEditors: 周克朋 15538308935@163.com
- * @LastEditTime: 2025-05-13 14:16:47
- * @FilePath: \usb-file-monitor\src\login.html
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
--->
 <!DOCTYPE html>
 <html>
 
 <head>
     <title>登录</title>
     <style>
+        html {
+            height: 100%;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100%;
             margin: 0;
             padding: 0;
             display: flex;
@@ -21,17 +18,27 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            background-color: #f5f7fa;
         }
         
         .login-container {
+            box-sizing: border-box;
             padding: 30px;
             width: 100%;
+            height: 100%;
+            max-width: 350px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            position: relative;
         }
         
         .login-title {
             text-align: center;
             margin-bottom: 20px;
             color: #333;
+            font-size: 24px;
+            font-weight: 600;
         }
         
         .input-group {
@@ -42,38 +49,53 @@
             display: block;
             margin-bottom: 5px;
             color: #666;
+            font-size: 14px;
         }
         
         .input-group input {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
             box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
         }
         
         .login-button {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background-color: #4caf50;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
         }
         
         .login-button:hover {
             background-color: #45a049;
         }
         
+        .login-button:active {
+            background-color: #3d8b40;
+        }
+        
         .error-message {
-            color: red;
+            color: #e53935;
             text-align: center;
             margin-top: 10px;
             display: none;
+            font-size: 14px;
         }
-        /* 新增 logo 和软件名称样式 */
         
         .logo-container {
             text-align: center;
@@ -84,6 +106,8 @@
             width: 80px;
             height: 80px;
             margin-bottom: 10px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         
         .software-name {
@@ -91,12 +115,78 @@
             font-weight: bold;
             color: #333;
         }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked+.slider {
+            background-color: #4a90e2;
+        }
+        
+        input:focus+.slider {
+            box-shadow: 0 0 1px #4a90e2;
+        }
+        
+        input:checked+.slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+        
+        .settings-button {
+            border: none;
+            background: none;
+            float: right;
+            margin: -15px -15px 0 0;
+        }
     </style>
 </head>
 
 <body>
     <div class="login-container">
-        <!-- 新增 logo 和软件名称 -->
+        <!-- 设置按钮 -->
+        <button class="settings-button" id="login-settings-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+    </button>
         <div class="logo-container">
             <img src="../src/static/images/file-management-icon.png" alt="文件管理图标" />
             <div class="software-name">lighthouse</div>
@@ -109,7 +199,9 @@
             <label for="password">密码</label>
             <input type="password" id="password" placeholder="请输入密码" />
         </div>
-        <button class="login-button" onclick="login()">登录</button>
+        <div class="switch-login-group">
+            <button class="login-button" onclick="login()">登录</button>
+        </div>
         <div id="errorMessage" class="error-message"></div>
     </div>
     <script src="login.js"></script>

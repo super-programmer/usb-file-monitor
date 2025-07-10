@@ -2,12 +2,13 @@
  * @Author: 周克朋 15538308935@163.com
  * @Date: 2025-02-27 17:31:13
  * @LastEditors: 周克朋 15538308935@163.com
- * @LastEditTime: 2025-07-07 15:08:39
+ * @LastEditTime: 2025-07-10 16:04:03
  * @FilePath: \usb-file-monitor\src\login.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 const { ipcRenderer } = require("electron");
 
+ipcRenderer.invoke('load-mongo-settings')
 async function login() {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
@@ -38,7 +39,13 @@ async function login() {
         errorMessage.style.display = "block";
     }
 }
-
+// 打开设置弹框
+document.getElementById('login-settings-button').addEventListener('click', function() {
+    const {
+        ipcRenderer
+    } = require('electron');
+    ipcRenderer.send('open-mongo-settings');
+});
 // 按回车键登录
 document.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {

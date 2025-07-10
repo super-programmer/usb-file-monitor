@@ -1,0 +1,177 @@
+<!-- mongo-settings.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>MongoDB 设置</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+        
+        .save-button {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .save-button:hover {
+            background-color: #45a049;
+        }
+        
+        .save-button:active {
+            background-color: #3d8b40;
+        }
+        
+        .cancel-button {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .cancel-button:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .success-message {
+            display: none;
+            color: #43a047;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="modal-title">MongoDB 设置</div>
+
+    <div class="form-group">
+        <label for="mongo-url">数据库链接 URL</label>
+        <input type="text" id="mongo-url" placeholder="例如: mongodb://localhost:27017" />
+    </div>
+
+    <div class="form-group">
+        <label for="mongo-dbname">数据库名称</label>
+        <input type="text" id="mongo-dbname" placeholder="例如: usbMonitor" />
+    </div>
+
+    <div class="button-group">
+        <button class="cancel-button" id="cancel-btn">取消</button>
+        <button class="save-button" id="save-btn">保存设置</button>
+    </div>
+
+    <div class="success-message" id="success-message">设置已保存</div>
+
+    <script>
+        const {
+            ipcRenderer
+        } = require('electron');
+
+        // 加载已保存的设置（从磁盘文件）
+        document.addEventListener('DOMContentLoaded', async() => {
+            try {
+                const settings = await ipcRenderer.invoke('load-mongo-settings');
+                if (settings) {
+                    document.getElementById('mongo-url').value = settings.url || '';
+                    document.getElementById('mongo-dbname').value = settings.dbName || '';
+                }
+            } catch (error) {
+                console.error("加载设置失败:", error);
+                alert("加载配置失败: " + error.message);
+            }
+        });
+
+        // 保存设置（到磁盘文件）
+        document.getElementById('save-btn').addEventListener('click', async() => {
+            const url = document.getElementById('mongo-url').value.trim();
+            const dbName = document.getElementById('mongo-dbname').value.trim();
+
+            if (!url || !dbName) {
+                alert('请填写完整的数据库连接信息');
+                return;
+            }
+
+            try {
+                await ipcRenderer.invoke('save-mongo-settings', {
+                    url,
+                    dbName
+                });
+
+                // 显示保存成功消息
+                const successMessage = document.getElementById('success-message');
+                successMessage.style.display = 'block';
+
+                // 1秒后关闭窗口
+                setTimeout(() => {
+                    ipcRenderer.send('close-mongo-settings');
+                }, 1000);
+            } catch (error) {
+                console.error("保存设置失败:", error);
+                alert("保存配置失败: " + error.message);
+            }
+        });
+
+        // 取消按钮
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            ipcRenderer.send('close-mongo-settings');
+        });
+    </script>
+</body>
+
+</html>

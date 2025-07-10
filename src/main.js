@@ -1,37 +1,75 @@
-/*
- * @Author: 周克朋 15538308935@163.com
- * @Date: 2025-02-27 17:31:19
- * @LastEditors: 周克朋 15538308935@163.com
- * @LastEditTime: 2025-07-05 16:00:24
- * @FilePath: \usb-file-monitor\src\main.js
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
-// 引入index.js
-const indexJS = require("./index.js");
-
+// main.js
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { MongoClient } = require("mongodb");
-
-// MongoDB 连接配置
-const mongoConfig = {
-    url: "mongodb://localhost:27017",
-    dbName: "usbMonitor",
-    options: {
-        // useNewUrlParser: true,
-        // useUnifiedTopology: true
-    }
+const { execFile } = require("child_process");
+const indexJS = require("./index");
+const { logger } = require("./util/index.js");
+// MongoDB配置文件路径
+const CONFIG_FILE_PATH = path.join(
+    app.getPath("userData"),
+    "mongo-config.json"
+);
+// MongoDB配置
+let mongoConfig = {
+    url: "",
+    dbName: "",
+    options: {}
 };
 
 let mainWindow = null;
 let loginWindow = null;
+let mongoSettingsWindow = null;
+
+// 创建MongoDB设置窗口
+function createMongoSettingsWindow() {
+    if (mongoSettingsWindow) {
+        mongoSettingsWindow.focus();
+        return;
+    }
+
+    mongoSettingsWindow = new BrowserWindow({
+        width: 400,
+        height: 300,
+        resizable: false,
+        modal: true,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        },
+        frame: false,
+        transparent: false,
+        resizable: false
+    });
+
+    mongoSettingsWindow.loadFile("src/renderer/mongo-settings.html");
+
+    // 监听窗口关闭事件
+    mongoSettingsWindow.on("closed", () => {
+        mongoSettingsWindow = null;
+    });
+
+    // 加载已保存的设置
+    ipcMain.on("load-mongo-settings", (event) => {
+        event.sender.send(
+            "mongo-settings-loaded",
+            savedConfig ? JSON.parse(savedConfig) : null
+        );
+    });
+
+    // 关闭设置窗口
+    ipcMain.on("close-mongo-settings", () => {
+        if (mongoSettingsWindow) {
+            mongoSettingsWindow.close();
+        }
+    });
+}
 
 // 创建登录窗口
 function createLoginWindow() {
     loginWindow = new BrowserWindow({
         width: 320,
         height: 480,
-        icon: path.join(__dirname, "../src/static/images/file-management-icon.png"),
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
@@ -43,7 +81,6 @@ function createLoginWindow() {
     });
 
     loginWindow.loadFile("src/login.html");
-
     loginWindow.on("closed", () => {
         loginWindow = null;
     });
@@ -116,25 +153,61 @@ app.on("activate", () => {
         createLoginWindow();
     }
 });
-
-// Add this handler
-ipcMain.on("open-file-changes", () => {
-    const logWindow = new BrowserWindow({
-        width: 400,
-        height: 600,
-        webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            preload: path.join(__dirname, "preload.js")
-        },
-        frame: true,
-        transparent: true,
-        closable: true,
-        resizable: true
-    });
-
-    logWindow.loadFile("src/renderer/file-changes.html");
-    logWindow.on("closed", () => {
-        logWindow = null;
-    });
+// 加载MongoDB配置（从磁盘文件）
+ipcMain.handle("load-mongo-settings", async() => {
+    logger.info("load-mongo-settings");
+    try {
+        // 使用PowerShell读取JSON文件
+        const result = await executePowerShellScript(
+            `Get-Content -Path '${CONFIG_FILE_PATH}' | ConvertFrom-Json | ConvertTo-Json`
+        );
+        const jsonObj = JSON.parse(result.stdout.trim());
+        logger.info(jsonObj);
+        mongoConfig.url = jsonObj ? jsonObj.url : "";
+        mongoConfig.dbName = jsonObj ? jsonObj.dbName : "";
+        return jsonObj;
+    } catch (error) {
+        logger.info("读取配置文件失败" + error);
+        return null; // 返回null表示配置文件不存在或读取失败
+    }
 });
+
+// 保存MongoDB配置（通过PowerShell写入磁盘）
+ipcMain.handle("save-mongo-settings", async(event, settings) => {
+    try {
+        const jsonContent = JSON.stringify(settings, null, 2);
+        const encodedContent = Buffer.from(jsonContent).toString("base64");
+
+        // 使用PowerShell写入JSON文件（Base64编码避免特殊字符问题）
+        await executePowerShellScript(`
+            $content = [System.Convert]::FromBase64String('${encodedContent}')
+            [System.IO.File]::WriteAllBytes('${CONFIG_FILE_PATH}', $content)
+        `);
+        logger.info("配置已保存到:" + CONFIG_FILE_PATH);
+        mongoConfig.url = settings ? settings.url : "";
+        mongoConfig.dbName = settings ? settings.dbName : "";
+        return true;
+    } catch (error) {
+        logger.error("保存配置文件失败:" + error);
+        throw error;
+    }
+});
+
+// 执行PowerShell脚本
+function executePowerShellScript(script) {
+    return new Promise((resolve, reject) => {
+        const powershell = execFile(
+            "powershell.exe", ["-Command", script], { maxBuffer: 1024 * 1024 }, // 增加缓冲区大小
+            (error, stdout, stderr) => {
+                if (error) {
+                    console.error("PowerShell错误:", stderr);
+                    reject(new Error(`PowerShell执行失败: ${stderr}`));
+                    return;
+                }
+                resolve({ stdout, stderr });
+            }
+        );
+    });
+}
+// 打开MongoDB设置窗口的IPC处理
+ipcMain.on("open-mongo-settings", createMongoSettingsWindow);
